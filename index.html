@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!-- Viewport optimisé pour iPhone -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Suivi Santé iOS</title>
+  <link rel="apple-touch-icon" href="Suivi_médical.png">
+  <link rel="icon" type="image/png" href="Suivi_médical.png">
+  <style>
+    :root {
+      --primary-color: #007aff; /* Bleu iOS */
+      --bg-color: #f2f2f7;      /* Fond iOS */
+      --card-bg: #ffffff;
+      --text-color: #1c1c1e;
+      --border-color: #e5e5ea;
+      --nav-bg: #ffffff;
+      --danger-color: #ff3b30;  /* Rouge iOS */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding-bottom: calc(75px + env(safe-area-inset-bottom));
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: var(--primary-color);
+      color: white;
+      padding-top: calc(12px + env(safe-area-inset-top));
+      padding-bottom: 14px;
+      padding-left: 16px;
+      padding-right: 16px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.1rem;
+      position: sticky;
+      top: 0;
+      z-index: 900;
+    }
+
+    .container {
+      padding: 16px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: var(--primary-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      font-weight: 500;
+      color: #636366;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 1rem;
+      background-color: #fafafa;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    /* Zone agrandie verticalement */
+    .form-group textarea.large-textarea {
+      min-height: 160px;
+      resize: vertical;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary-color);
+      background-color: #fff;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row .form-group {
+      flex: 1;
+    }
+
+    button.btn-add {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    button.btn-add:active {
+      opacity: 0.7;
+    }
+
+    .history-list {
+      list-style: none;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-date {
+      font-size: 0.8rem;
+      color: #8e8e93;
+    }
+
+    .history-val {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    /* Cartes/Rectangles de médicaments */
+    .med-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .med-card {
+      background-color: #fafafa;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .med-card:active {
+      background-color: #e5e5ea;
+    }
+
+    .med-card-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .med-card-title {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text-color);
+    }
+
+    .med-card-sub {
+      font-size: 0.8rem;
+      color: #8e8e93;
+    }
+
+    /* Bouton de suppression */
+    .btn-delete {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
+
+    .btn-delete:active {
+      background-color: rgba(255, 59, 48, 0.1);
+    }
+
+    .btn-delete svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* Fenêtre modale */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      width: 90%;
+      max-width: 400px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .modal-card h3 {
+      font-size: 1.1rem;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+    }
+
+    .modal-card p {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      color: var(--text-color);
+      white-space: pre-wrap;
+      margin-bottom: 16px;
+    }
+
+    .btn-close-modal {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Bottom Nav iOS */
+    nav.bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(60px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background-color: var(--nav-bg);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      height: 100%;
+      background: none;
+      border: none;
+      color: #8e8e93;
+      font-size: 0.68rem;
+      cursor: pointer;
+      gap: 3px;
+    }
+
+    .nav-item svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .nav-item.active {
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .color-picker-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .color-picker-group input[type="color"] {
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <header id="header-title">Pression Artérielle</header>
+
+  <div class="container">
+    
+    <!-- Tab 1: Tension -->
+    <div id="tab-tension" class="tab-content active">
+      <div class="card">
+        <h2>Nouvelle mesure</h2>
+        <div class="row">
+          <div class="form-group">
+            <label for="sys">Systole (SYS)</label>
+            <input type="number" id="sys" placeholder="120" inputmode="numeric">
+          </div>
+          <div class="form-group">
+            <label for="dia">Diastole (DIA)</label>
+            <input type="number" id="dia" placeholder="80" inputmode="numeric">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="pulse">Pouls (BPM)</label>
+          <input type="number" id="pulse" placeholder="70" inputmode="numeric">
+        </div>
+        <button class="btn-add" onclick="addEntry('tension')">Enregistrer</button>
+      </div>
+
+      <div class="card">
+        <h2>Historique</h2>
+        <ul id="list-tension" class="history-list"></ul>
+      </div>
+    </div>
+
+    <!-- Tab 2: Diabète -->
+    <div id="tab-diabete" class="tab-content">
+      <div class="card">
+        <h2>Nouvelle glycémie</h2>
+        <div class="form-group">
+          <label for="glycemie">Glycémie (mmol/L ou g/L)</label>
+          <input type="number" step="0.1" id="glycemie" placeholder="5.5" inputmode="decimal">
+        </div>
+        <div class="form-group">
+          <label for="moment">Moment</label>
+          <input type="text" id="moment" placeholder="Ex: À jeun, Après repas">
+        </div>
+        <button class="btn-add" onclick="addEntry('diabete')">Enregistrer</button>
+      </div>
+
+      <div class="card">
+        <h2>Historique</h2>
+        <ul id="list-diabete" class="history-list"></ul>
+      </div>
+    </div>
+
+    <!-- Tab 3: Poids -->
+    <div id="tab-poids" class="tab-content">
+      <div class="card">
+        <h2>Nouveau poids</h2>
+        <div class="form-group">
+          <label for="poids">Poids (kg ou lbs)</label>
+          <input type="number" step="0.1" id="poids" placeholder="75.0" inputmode="decimal">
+        </div>
+        <button class="btn-add" onclick="addEntry('poids')">Enregistrer</button>
+      </div>
+
+      <div class="card">
+        <h2>Historique</h2>
+        <ul id="list-poids" class="history-list"></ul>
+      </div>
+    </div>
+
+    <!-- Tab 4: Médicaments & Profil -->
+    <div id="tab-profil" class="tab-content">
+      <div class="card">
+        <h2>Profil Général</h2>
+        <div class="form-group">
+          <label for="blood-type">Groupe sanguin</label>
+          <select id="blood-type" onchange="saveGeneralProfile()">
+            <option value="">Non spécifié</option>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="allergies">Allergies connues</label>
+          <input type="text" id="allergies" placeholder="Ex: Pénicilline, arachides..." onchange="saveGeneralProfile()">
+        </div>
+        <div class="form-group">
+          <label for="notes">Notes médicales ou remarques</label>
+          <textarea id="notes" placeholder="Informations complémentaires, médecins, etc." onchange="saveGeneralProfile()"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Ajouter un médicament</h2>
+        <div class="form-group">
+          <label for="med-name">Nom du médicament</label>
+          <input type="text" id="med-name" placeholder="Ex: Tylenol 500mg">
+        </div>
+        <div class="form-group">
+          <label for="med-desc">À quoi sert ce médicament ? (Description / Posologie)</label>
+          <textarea id="med-desc" class="large-textarea" placeholder="Ex: Utiliser en cas de maux de tête ou fièvre. Prendre 1 comprimé toutes les 6 heures au besoin."></textarea>
+        </div>
+        <button class="btn-add" onclick="addMedication()">Ajouter à la liste</button>
+      </div>
+
+      <div class="card">
+        <h2>Mes Médicaments</h2>
+        <div id="med-list" class="med-grid"></div>
+      </div>
+    </div>
+
+    <!-- Tab 5: Paramètres -->
+    <div id="tab-params" class="tab-content">
+      <div class="card">
+        <h2>Couleurs de l'application</h2>
+        <div class="color-picker-group">
+          <label for="color-primary">Couleur Principale</label>
+          <input type="color" id="color-primary" value="#007aff" onchange="updateTheme()">
+        </div>
+        <div class="color-picker-group">
+          <label for="color-bg">Fond de l'application</label>
+          <input type="color" id="color-bg" value="#f2f2f7" onchange="updateTheme()">
+        </div>
+        <div class="color-picker-group">
+          <label for="color-card">Fond des Cartes</label>
+          <input type="color" id="color-card" value="#ffffff" onchange="updateTheme()">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Fenêtre Modale d'Information -->
+  <div id="med-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 id="modal-title">Nom du médicament</h3>
+      <p id="modal-desc">Description et utilité du médicament...</p>
+      <button class="btn-close-modal" onclick="closeModal()">Fermer</button>
+    </div>
+  </div>
+
+  <!-- Navigation fixe iOS -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('tension', 'Pression Artérielle', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      <span>Tension</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('diabete', 'Diabète', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+      <span>Diabète</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('poids', 'Suivi du Poids', this)">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm6 12H6v-1.4c0-2 4-3.1 6-3.1s6 1.1 6 3.1V18z"/></svg>
+      <span>Poids</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('profil', 'Profil & Médicaments', this)">
+      <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      <span>Profil</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('params', 'Paramètres', this)">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      <span>Couleurs</span>
+    </button>
+  </nav>
+
+  <script>
+    // Navigation
+    function switchTab(tabId, title, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById('tab-' + tabId).classList.add('active');
+      document.getElementById('header-title').innerText = title;
+      btn.classList.add('active');
+    }
+
+    // Thème de couleurs
+    function updateTheme() {
+      const primary = document.getElementById('color-primary').value;
+      const bg = document.getElementById('color-bg').value;
+      const card = document.getElementById('color-card').value;
+
+      document.documentElement.style.setProperty('--primary-color', primary);
+      document.documentElement.style.setProperty('--bg-color', bg);
+      document.documentElement.style.setProperty('--card-bg', card);
+
+      localStorage.setItem('health_colors', JSON.stringify({ primary, bg, card }));
+    }
+
+    function loadTheme() {
+      const saved = localStorage.getItem('health_colors');
+      if (saved) {
+        const { primary, bg, card } = JSON.parse(saved);
+        document.getElementById('color-primary').value = primary;
+        document.getElementById('color-bg').value = bg;
+        document.getElementById('color-card').value = card;
+        updateTheme();
+      }
+    }
+
+    // Date/Heure actuelles au format fr
+    function getFormattedNow() {
+      const now = new Date();
+      return now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + 
+             ' à ' + 
+             now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Ajout d'entrée (Tension, Diabète, Poids)
+    function addEntry(type) {
+      const nowFormatted = getFormattedNow();
+      let payload = { id: Date.now(), date: nowFormatted };
+
+      if (type === 'tension') {
+        const sys = document.getElementById('sys').value;
+        const dia = document.getElementById('dia').value;
+        const pulse = document.getElementById('pulse').value;
+        if (!sys || !dia) return;
+        payload.val = `${sys}/${dia} mmHg (${pulse ? pulse : '-'} BPM)`;
+        document.getElementById('sys').value = '';
+        document.getElementById('dia').value = '';
+        document.getElementById('pulse').value = '';
+      } 
+      else if (type === 'diabete') {
+        const gly = document.getElementById('glycemie').value;
+        const moment = document.getElementById('moment').value;
+        if (!gly) return;
+        payload.val = `${gly} ${moment ? '- ' + moment : ''}`;
+        document.getElementById('glycemie').value = '';
+        document.getElementById('moment').value = '';
+      } 
+      else if (type === 'poids') {
+        const p = document.getElementById('poids').value;
+        if (!p) return;
+        payload.val = `${p} kg`;
+        document.getElementById('poids').value = '';
+      }
+
+      let data = JSON.parse(localStorage.getItem('health_' + type) || '[]');
+      data.unshift(payload);
+      localStorage.setItem('health_' + type, JSON.stringify(data));
+
+      renderList(type);
+    }
+
+    // Suppression d'une entrée d'historique
+    function deleteEntry(type, index) {
+      let data = JSON.parse(localStorage.getItem('health_' + type) || '[]');
+      data.splice(index, 1);
+      localStorage.setItem('health_' + type, JSON.stringify(data));
+      renderList(type);
+    }
+
+    // Affichage des listes d'historique
+    function renderList(type) {
+      const listEl = document.getElementById('list-' + type);
+      const data = JSON.parse(localStorage.getItem('health_' + type) || '[]');
+      
+      if (data.length === 0) {
+        listEl.innerHTML = '<li class="history-item"><span class="history-date">Aucune donnée enregistrée</span></li>';
+        return;
+      }
+
+      listEl.innerHTML = data.map((item, index) => `
+        <li class="history-item">
+          <div class="history-info">
+            <span class="history-val">${item.val}</span>
+            <span class="history-date">${item.date}</span>
+          </div>
+          <button class="btn-delete" onclick="deleteEntry('${type}', ${index})" title="Supprimer">
+            <svg viewBox="0 0 24 24">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+          </button>
+        </li>
+      `).join('');
+    }
+
+    // --- Gestion des Médicaments ---
+    function addMedication() {
+      const nameInput = document.getElementById('med-name');
+      const descInput = document.getElementById('med-desc');
+
+      const name = nameInput.value.trim();
+      const desc = descInput.value.trim();
+
+      if (!name) return;
+
+      let meds = JSON.parse(localStorage.getItem('health_meds') || '[]');
+      meds.push({ name, desc: desc || 'Aucune description fournie.' });
+      localStorage.setItem('health_meds', JSON.stringify(meds));
+
+      nameInput.value = '';
+      descInput.value = '';
+      renderMedications();
+    }
+
+    function deleteMedication(index, event) {
+      event.stopPropagation(); // Évite d'ouvrir la modale au clic sur supprimer
+      let meds = JSON.parse(localStorage.getItem('health_meds') || '[]');
+      meds.splice(index, 1);
+      localStorage.setItem('health_meds', JSON.stringify(meds));
+      renderMedications();
+    }
+
+    function renderMedications() {
+      const medListEl = document.getElementById('med-list');
+      const meds = JSON.parse(localStorage.getItem('health_meds') || '[]');
+
+      if (meds.length === 0) {
+        medListEl.innerHTML = '<span class="history-date">Aucun médicament enregistré</span>';
+        return;
+      }
+
+      medListEl.innerHTML = meds.map((med, index) => `
+        <div class="med-card" onclick="openModal('${index}')">
+          <div class="med-card-info">
+            <span class="med-card-title">${med.name}</span>
+            <span class="med-card-sub">Cliquer pour voir l'utilité</span>
+          </div>
+          <button class="btn-delete" onclick="deleteMedication(${index}, event)" title="Supprimer">
+            <svg viewBox="0 0 24 24">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Modal
+    function openModal(index) {
+      const meds = JSON.parse(localStorage.getItem('health_meds') || '[]');
+      const med = meds[index];
+      if (!med) return;
+
+      document.getElementById('modal-title').innerText = med.name;
+      document.getElementById('modal-desc').innerText = med.desc;
+      document.getElementById('med-modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('med-modal').classList.remove('active');
+    }
+
+    // --- Profil Général (Groupe Sanguin, Allergies, Notes) ---
+    function saveGeneralProfile() {
+      const profile = {
+        bloodType: document.getElementById('blood-type').value,
+        allergies: document.getElementById('allergies').value,
+        notes: document.getElementById('notes').value
+      };
+      localStorage.setItem('health_general_profile', JSON.stringify(profile));
+    }
+
+    function loadGeneralProfile() {
+      const saved = localStorage.getItem('health_general_profile');
+      if (saved) {
+        const profile = JSON.parse(saved);
+        document.getElementById('blood-type').value = profile.bloodType || '';
+        document.getElementById('allergies').value = profile.allergies || '';
+        document.getElementById('notes').value = profile.notes || '';
+      }
+    }
+
+    // Initialisation
+    window.onload = () => {
+      loadTheme();
+      loadGeneralProfile();
+      renderMedications();
+      ['tension', 'diabete', 'poids'].forEach(renderList);
+    };
+  </script>
+</body>
+</html>
